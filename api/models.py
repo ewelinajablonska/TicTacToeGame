@@ -25,3 +25,10 @@ class UserProfile(models.Model):
     country = models.CharField(max_length=50)
     city = models.CharField(max_length=50)
     phone = models.CharField(max_length=40, blank=True)
+
+
+class HighScore(models.Model):
+    player = models.ForeignKey(User, on_delete=models.CASCADE)
+    date = models.DateTimeField(editable=False, blank=True)
+    duration_time = models.TimeField(editable=False, blank=True)
+    moves_count = models.IntegerField(default=1)

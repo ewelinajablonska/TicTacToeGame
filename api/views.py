@@ -3,8 +3,8 @@ from django.shortcuts import render
 from rest_framework import viewsets
 from rest_framework.permissions import AllowAny
 
-from api.models import User
-from api.serializers import UserSerializer
+from api.models import HighScore, User
+from api.serializers import DashboardSerializer, UserSerializer
 from api.permissions import IsLoggedInUserOrAdmin, IsAdminUser
 
 
@@ -22,3 +22,9 @@ class UserViewSet(viewsets.ModelViewSet):
         elif self.action == 'list' or self.action == 'destroy':
             permission_classes = [IsAdminUser]
         return [permission() for permission in permission_classes]
+
+
+class Dashboard(viewsets.ReadOnlyModelViewSet):
+    serializer_class = DashboardSerializer
+    queryset = HighScore.objects.all().order_by('moves_count', 'duration_time')[:10]
+

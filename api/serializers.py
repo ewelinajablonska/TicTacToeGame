@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from api.models import User, UserProfile
+from api.models import HighScore, User, UserProfile
 
 
 class UserProfileSerializer(serializers.ModelSerializer):
@@ -39,3 +39,13 @@ class UserSerializer(serializers.HyperlinkedModelSerializer):
         profile.save()
 
         return instance
+
+class DashboardSerializer(serializers.ModelSerializer):
+    player = UserSerializer(read_only=True)
+    date = serializers.ReadOnlyField()
+    duration_time = serializers.ReadOnlyField()
+    moves_count = serializers.IntegerField(read_only=True)
+    
+    class Meta:
+        model = HighScore
+        fields = '__all__'

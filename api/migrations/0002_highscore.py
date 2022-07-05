@@ -17,7 +17,7 @@ class Migration(migrations.Migration):
             fields=[
                 ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
                 ('date', models.DateTimeField(blank=True, editable=False)),
-                ('duration_time', models.TimeField(blank=True, editable=False)),
+                ('duration_time', models.DurationField(blank=True)),
                 ('moves_count', models.IntegerField(default=1)),
                 ('player', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to=settings.AUTH_USER_MODEL)),
             ],

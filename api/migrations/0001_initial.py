@@ -128,7 +128,7 @@ class Migration(migrations.Migration):
                         verbose_name="ID",
                     ),
                 ),
-                ("title", models.CharField(max_length=5)),
+                ("title", models.CharField(max_length=50)),
                 ("address", models.CharField(max_length=255)),
                 ("country", models.CharField(max_length=50)),
                 ("city", models.CharField(max_length=50)),

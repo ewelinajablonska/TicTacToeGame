@@ -3,8 +3,8 @@ from django.shortcuts import render
 from rest_framework import viewsets
 from rest_framework.permissions import AllowAny
 
-from api.models import HighScore, User
-from api.serializers import DashboardSerializer, UserSerializer
+from api.models import Game, HighScore, User
+from api.serializers import DashboardSerializer, GamePlayPartialSerializer, GamePlaySerializer, UserSerializer
 from api.permissions import IsLoggedInUserOrAdmin, IsAdminUser
 
 
@@ -24,7 +24,28 @@ class UserViewSet(viewsets.ModelViewSet):
         return [permission() for permission in permission_classes]
 
 
-class Dashboard(viewsets.ReadOnlyModelViewSet):
+class DashboardViewSet(viewsets.ReadOnlyModelViewSet):
+    """
+    API endpoint that allows highscores to be seen.
+    """
     serializer_class = DashboardSerializer
     queryset = HighScore.objects.all().order_by('moves_count', 'duration_time')[:10]
 
+
+class GamePlayViewSet(viewsets.ModelViewSet):
+    """
+    API endpoint that allows games to be created, read and updated.
+    """
+    serializer_class = GamePlaySerializer
+    queryset = Game.objects.all()
+
+    serializer_action_classes = {
+        'partial_update': GamePlayPartialSerializer
+    }
+
+    def put(self, request, *args, **kwargs):
+        return self.update(request, *args, **kwargs)
+
+    def partial_update(self, request, *args, **kwargs):
+        kwargs['partial'] = True
+        return self.update(request, *args, **kwargs)

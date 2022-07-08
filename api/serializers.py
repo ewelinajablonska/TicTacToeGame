@@ -48,7 +48,41 @@ class DashboardSerializer(serializers.ModelSerializer):
     date = serializers.ReadOnlyField()
     duration_time = serializers.ReadOnlyField()
     moves_count = serializers.IntegerField(read_only=True)
-    
+
     class Meta:
         model = HighScore
         fields = '__all__'
+
+
+class GamePlaySerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Game
+        fields = '__all__'
+
+    def create(self, validated_data):
+        self._setup()
+
+    def _setup(self):
+        # set players
+        # TODO--- how to do that, set first player ---
+        # set created_date
+        self.created_date = timezone.now()
+        # get the winnig combinations
+        self.winning_combinations = self._get_winning_combinations()
+        # define how to store moves
+        self.status = [
+            Move.objects.create(row=row, col=col) for col in range(self.board_size)
+            for row in range(self.board_size)
+        ]
+
+    def _get_winning_combinations(self):
+        rows = [
+            [(move.row, move.col) for move in row]
+            for row in self.current_moves
+        ]
+        columns = [list(col) for col in zip(*rows)]
+        first_diagonal = [row[i] for i, row in enumerate(rows)]
+        second_diagonal = [col[j] for j, col in enumerate(reversed(columns))]
+        winning_combinations = rows + columns + [first_diagonal, second_diagonal]
+        return winning_combinations

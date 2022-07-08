@@ -88,8 +88,15 @@ class GamePlaySerializer(serializers.ModelSerializer):
         return winning_combinations
 
 
-class GamePlayPartialUpdatedSerializer(serializers.ModelSerializer):
+class MoveSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Move
+        fields = '__all__'
 
+
+class GamePlayPartialUpdatedSerializer(serializers.ModelSerializer):
+    current_moves = MoveSerializer(read_only=True)
+    
     class Meta:
         model = Game
         fields = (

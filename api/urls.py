@@ -11,5 +11,5 @@ router.register(r'users', UserViewSet)
 urlpatterns = [
     re_path(r'^', include(router.urls)),
     re_path(r'^dj-rest-auth/', include('dj_rest_auth.urls')),
-    re_path(r'^dashboard', views.Dashboard.as_view({"get": "list"}), name='dashboard'),
+    re_path(r'^dashboard', views.DashboardViewSet.as_view({"get": "list"}), name='dashboard'),
 ]

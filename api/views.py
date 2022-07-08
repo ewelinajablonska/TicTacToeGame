@@ -4,7 +4,7 @@ from rest_framework import viewsets
 from rest_framework.permissions import AllowAny
 
 from api.models import Game, HighScore, User
-from api.serializers import DashboardSerializer, GamePlayPartialSerializer, GamePlaySerializer, UserSerializer
+from api.serializers import DashboardSerializer, GamePlayPartialSerializer, GamePlaySerializer, MoveSerializer, UserSerializer
 from api.permissions import IsLoggedInUserOrAdmin, IsAdminUser
 
 
@@ -34,7 +34,7 @@ class DashboardViewSet(viewsets.ReadOnlyModelViewSet):
 
 class GamePlayViewSet(viewsets.ModelViewSet):
     """
-    API endpoint that allows games to be created, read and updated.
+    API endpoint that allows games to be created, read. TODO not updated
     """
     serializer_class = GamePlaySerializer
     queryset = Game.objects.all()

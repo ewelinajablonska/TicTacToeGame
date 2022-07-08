@@ -1,7 +1,6 @@
-from datetime import datetime, timezone
+from datetime import timezone
 from django.db import models
 from django.contrib.auth.models import AbstractUser
-from django.forms import JSONField
 from django.utils.translation import gettext as _
 from django.conf import settings
 
@@ -45,7 +44,17 @@ class HighScore(models.Model):
         return super(HighScore, self).save(*args, **kwargs)
 
 class Game(models.Model):
-    player = models.ManyToManyField(UserProfile, related_name='players', blank=True)
+    # setup informations
+    player_o = models.ForeignKey(UserProfile, related_name='player_o')
+    player_x = models.ForeignKey(UserProfile, related_name='player_x')
     created_date = models.DateTimeField(blank=True)
-    status = JSONField()
+    board_size = models.IntegerField(default=3)
+    winning_combinations = models.JSONField()
+    # finish informations
     is_done = models.BooleanField(default=False)
+    has_winner = models.BooleanField(default=False)
+    winner_combination = models.JSONField()
+    # current informations
+    current_player = models.ForeignKey(UserProfile, related_name='current_player')
+    current_moves = models.ForeignKey(Move, on_delete=models.CASCADE)
+

@@ -1,5 +1,7 @@
+from datetime import timezone
+from django.forms import ValidationError
 from rest_framework import serializers
-from api.models import HighScore, User, UserProfile
+from api.models import Game, HighScore, Move, User, UserProfile
 
 
 class UserProfileSerializer(serializers.ModelSerializer):
@@ -40,8 +42,9 @@ class UserSerializer(serializers.HyperlinkedModelSerializer):
 
         return instance
 
+
 class DashboardSerializer(serializers.ModelSerializer):
-    player = UserSerializer(read_only=True)
+    player = serializers.PrimaryKeyRelatedField(read_only=True)
     date = serializers.ReadOnlyField()
     duration_time = serializers.ReadOnlyField()
     moves_count = serializers.IntegerField(read_only=True)

@@ -86,3 +86,65 @@ class GamePlaySerializer(serializers.ModelSerializer):
         second_diagonal = [col[j] for j, col in enumerate(reversed(columns))]
         winning_combinations = rows + columns + [first_diagonal, second_diagonal]
         return winning_combinations
+
+
+class GamePlayPartialUpdatedSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Game
+        fields = (
+            'current_player',
+            'current_moves',
+        )
+
+    def validate_current_player(self, current_player):
+        if current_player.id == self.game.player_o or current_player.id == self.game.player_x:
+            return current_player
+        else: 
+            raise serializers.ValidationError(
+                "This player isn't one of the current players of this game."
+            )
+
+    def update(self, instance, validated_data):
+        if self._is_move_valid(validated_data['move']):
+            self.process_move(validated_data['move'])
+            if self.is_tied() or self.has_winner:
+                self.is_done = True
+            elif self.has_winner == True:
+                self.is_done = True
+            else:
+                # -- switch player -- 
+                pass
+
+    def _is_move_valid(self, move):
+        """Return True if move is valid, and False otherwise."""
+        row, col = move.row, move.col
+        move_was_not_played = Move.objects.filter(
+            row=row, col=col, player=move.player
+        ) == None
+        no_winner = not self.has_winner
+        return no_winner and move_was_not_played
+
+    def process_move(self, move):
+        """Process the current move and check if it's a win."""
+        row, col = move.row, move.col
+        self.current_moves.add(move)
+        self.current_moves.save()
+        for combo in self.winning_combinations:
+            results = list(
+                Move.objects.filter(row=n, col=m, plyer=move.player) for n, m in combo
+            )
+            is_win = (len(results) == self.board_size)
+            if is_win:
+                self.has_winner = True
+                self.winner_combination = combo
+                self.is_done = True
+                break
+
+    def is_tied(self):
+        """Return True if the game is tied, and False otherwise."""
+        no_winner = not self.has_winner
+        played_moves = (
+            move.player for row in self.current_moves for move in row
+        )
+        return no_winner and all(played_moves)

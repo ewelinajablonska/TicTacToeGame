@@ -43,6 +43,13 @@ class HighScore(models.Model):
 
         return super(HighScore, self).save(*args, **kwargs)
 
+
+class Move(models.Model):
+    row = models.IntegerField(blank=True, null=True)
+    col = models.IntegerField(blank=True, null=True)
+    player = models.ForeignKey(UserProfile, blank=True, null=True)
+
+
 class Game(models.Model):
     # setup informations
     player_o = models.ForeignKey(UserProfile, related_name='player_o')

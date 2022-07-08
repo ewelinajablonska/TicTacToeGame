@@ -94,7 +94,7 @@ class MoveSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
-class GamePlayPartialUpdatedSerializer(serializers.ModelSerializer):
+class GamePlayPartialUpdateSerializer(serializers.ModelSerializer):
     current_moves = MoveSerializer(read_only=True)
     
     class Meta:

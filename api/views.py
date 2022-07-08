@@ -4,7 +4,7 @@ from rest_framework import viewsets
 from rest_framework.permissions import AllowAny
 
 from api.models import Game, HighScore, User
-from api.serializers import DashboardSerializer, GamePlayPartialSerializer, GamePlaySerializer, MoveSerializer, UserSerializer
+from api.serializers import DashboardSerializer, GamePlayPartialUpdateSerializer, GamePlaySerializer, MoveSerializer, UserSerializer
 from api.permissions import IsLoggedInUserOrAdmin, IsAdminUser
 
 
@@ -40,7 +40,7 @@ class GamePlayViewSet(viewsets.ModelViewSet):
     queryset = Game.objects.all()
 
     serializer_action_classes = {
-        'partial_update': GamePlayPartialSerializer
+        'partial_update': GamePlayPartialUpdateSerializer
     }
 
     def put(self, request, *args, **kwargs):

@@ -43,6 +43,7 @@ class UserAdmin(BaseUserAdmin):
     ordering = ("email",)
     inlines = (UserProfileInline,)
 
+
 admin.site.register(UserProfile)
 admin.site.register(HighScore)
 admin.site.register(Game)

@@ -37,7 +37,7 @@ class HighScore(models.Model):
     moves_count = models.IntegerField(default=1)
 
     def save(self, *args, **kwargs):
-        ''' On save, update timestamps '''
+        """On save, update timestamps"""
         if not self.id:
             self.date = timezone.now()
 
@@ -47,12 +47,16 @@ class HighScore(models.Model):
 class Move(models.Model):
     row = models.IntegerField(blank=True, null=True)
     col = models.IntegerField(blank=True, null=True)
-    player = models.ForeignKey(UserProfile, on_delete=models.CASCADE, blank=True, null=True)
+    player = models.ForeignKey(
+        UserProfile, on_delete=models.CASCADE, blank=True, null=True
+    )
 
 
 class Game(models.Model):
     # setup informations
-    players = models.ManyToManyField(UserProfile, blank=True, related_name='game_players')
+    players = models.ManyToManyField(
+        UserProfile, blank=True, related_name="game_players"
+    )
     max_players_number = models.IntegerField(default=2)
     created_date = models.DateTimeField(blank=True)
     board_size = models.IntegerField(default=3)
@@ -62,6 +66,13 @@ class Game(models.Model):
     has_winner = models.BooleanField(default=False)
     winner_combination = models.JSONField(null=True, blank=True, default=list)
     # current informations
-    current_player = models.ForeignKey(UserProfile, on_delete=models.CASCADE,  blank=True, null=True, related_name='current_player')
-    current_moves = models.ForeignKey(Move, on_delete=models.CASCADE, blank=True, null=True)
-
+    current_player = models.ForeignKey(
+        UserProfile,
+        on_delete=models.CASCADE,
+        blank=True,
+        null=True,
+        related_name="current_player",
+    )
+    current_moves = models.ForeignKey(
+        Move, on_delete=models.CASCADE, blank=True, null=True
+    )

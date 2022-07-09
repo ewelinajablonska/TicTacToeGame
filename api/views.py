@@ -5,7 +5,13 @@ from rest_framework.permissions import AllowAny
 from api.mixins import SerializerActionClassMixin
 
 from api.models import Game, HighScore, User
-from api.serializers import DashboardSerializer, GamePlayPartialUpdateSerializer, GamePlaySerializer, MoveSerializer, UserSerializer
+from api.serializers import (
+    DashboardSerializer,
+    GamePlayPartialUpdateSerializer,
+    GamePlaySerializer,
+    MoveSerializer,
+    UserSerializer,
+)
 from api.permissions import IsLoggedInUserOrAdmin, IsAdminUser
 
 
@@ -13,14 +19,17 @@ class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
     serializer_class = UserSerializer
 
-
     def get_permissions(self):
         permission_classes = []
-        if self.action == 'create':
+        if self.action == "create":
             permission_classes = [AllowAny]
-        elif self.action == 'retrieve' or self.action == 'update' or self.action == 'partial_update':
+        elif (
+            self.action == "retrieve"
+            or self.action == "update"
+            or self.action == "partial_update"
+        ):
             permission_classes = [IsLoggedInUserOrAdmin]
-        elif self.action == 'list' or self.action == 'destroy':
+        elif self.action == "list" or self.action == "destroy":
             permission_classes = [IsAdminUser]
         return [permission() for permission in permission_classes]
 
@@ -29,24 +38,24 @@ class DashboardViewSet(viewsets.ReadOnlyModelViewSet):
     """
     API endpoint that allows highscores to be seen.
     """
+
     serializer_class = DashboardSerializer
-    queryset = HighScore.objects.all().order_by('moves_count', 'duration_time')[:10]
+    queryset = HighScore.objects.all().order_by("moves_count", "duration_time")[:10]
 
 
 class GamePlayViewSet(SerializerActionClassMixin, viewsets.ModelViewSet):
     """
     API endpoint that allows games to be created, read. TODO not updated
     """
+
     serializer_class = GamePlaySerializer
     queryset = Game.objects.all()
 
-    serializer_action_classes = {
-        'partial_update': GamePlayPartialUpdateSerializer
-    }
+    serializer_action_classes = {"partial_update": GamePlayPartialUpdateSerializer}
 
     def put(self, request, *args, **kwargs):
         return self.update(request, *args, **kwargs)
 
     def partial_update(self, request, *args, **kwargs):
-        kwargs['partial'] = True
+        kwargs["partial"] = True
         return self.update(request, *args, **kwargs)

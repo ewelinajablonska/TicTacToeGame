@@ -52,16 +52,16 @@ class Move(models.Model):
 
 class Game(models.Model):
     # setup informations
-    player_o = models.ForeignKey(UserProfile, on_delete=models.CASCADE, related_name='player_o')
-    player_x = models.ForeignKey(UserProfile, on_delete=models.CASCADE, related_name='player_x')
+    players = models.ManyToManyField(UserProfile, blank=True, related_name='game_players')
+    max_players_number = models.IntegerField(default=2)
     created_date = models.DateTimeField(blank=True)
     board_size = models.IntegerField(default=3)
-    winning_combinations = models.JSONField()
+    winning_combinations = models.JSONField(null=True, blank=True, default=list)
     # finish informations
     is_done = models.BooleanField(default=False)
     has_winner = models.BooleanField(default=False)
-    winner_combination = models.JSONField()
+    winner_combination = models.JSONField(null=True, blank=True, default=list)
     # current informations
-    current_player = models.ForeignKey(UserProfile, on_delete=models.CASCADE, related_name='current_player')
-    current_moves = models.ForeignKey(Move, on_delete=models.CASCADE, null=True)
+    current_player = models.ForeignKey(UserProfile, on_delete=models.CASCADE,  blank=True, null=True, related_name='current_player')
+    current_moves = models.ForeignKey(Move, on_delete=models.CASCADE, blank=True, null=True)
 

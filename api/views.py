@@ -2,6 +2,7 @@ from django.shortcuts import render
 
 from rest_framework import viewsets
 from rest_framework.permissions import AllowAny
+from api.mixins import SerializerActionClassMixin
 
 from api.models import Game, HighScore, User
 from api.serializers import DashboardSerializer, GamePlayPartialUpdateSerializer, GamePlaySerializer, MoveSerializer, UserSerializer
@@ -32,7 +33,7 @@ class DashboardViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = HighScore.objects.all().order_by('moves_count', 'duration_time')[:10]
 
 
-class GamePlayViewSet(viewsets.ModelViewSet):
+class GamePlayViewSet(SerializerActionClassMixin, viewsets.ModelViewSet):
     """
     API endpoint that allows games to be created, read. TODO not updated
     """

@@ -2,14 +2,16 @@ from django.shortcuts import render
 
 from rest_framework import viewsets
 from rest_framework.permissions import AllowAny
+from rest_framework import mixins
 from api.mixins import SerializerActionClassMixin
 
-from api.models import Game, HighScore, User
+from api.models import Game, HighScore, User, UserProfile
 from api.serializers import (
     DashboardSerializer,
     GamePlayPartialUpdateSerializer,
     GamePlaySerializer,
     MoveSerializer,
+    UserProfileSerializer,
     UserSerializer,
 )
 from api.permissions import IsLoggedInUserOrAdmin, IsAdminUser
@@ -43,7 +45,14 @@ class DashboardViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = HighScore.objects.all().order_by("moves_count", "duration_time")[:10]
 
 
-class GamePlayViewSet(SerializerActionClassMixin, viewsets.ModelViewSet):
+class GamePlayViewSet(
+    SerializerActionClassMixin,
+    mixins.CreateModelMixin,
+    mixins.RetrieveModelMixin,
+    mixins.DestroyModelMixin,
+    mixins.ListModelMixin,
+    viewsets.GenericViewSet,
+):
     """
     API endpoint that allows games to be created, read. TODO not updated
     """

@@ -68,9 +68,9 @@ class GamePlaySerializer(serializers.ModelSerializer):
             child=serializers.IntegerField(default=None, allow_null=True)
         )
     )
-    # status = serializers.ListField(
-    #     child=serializers.IntegerField(default=None, allow_null=True)
-    # )
+    status = serializers.ListField(
+        child=serializers.IntegerField(default=None, allow_null=True)
+    )
 
     class Meta:
         model = Game
@@ -165,7 +165,7 @@ class GamePlayPartialUpdateSerializer(serializers.ModelSerializer):
             self.process_move(validated_data["current_moves"])
             if self.is_tied():
                 instance.is_done = True
-                # instance.status = Move.objects.values_list('id','player')
+                instance.status = Move.objects.values_list('id','player')
                 instance.save()
                 return instance
             elif instance.has_winner == True:
@@ -180,7 +180,7 @@ class GamePlayPartialUpdateSerializer(serializers.ModelSerializer):
                     duration_time=duration,
                     moves_count=moves,
                 )
-                # instance.status = Move.objects.values_list('id','player')
+                instance.status = Move.objects.values_list('id','player')
                 instance.save()
                 Move.objects.all().delete()
                 return instance

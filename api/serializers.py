@@ -6,6 +6,10 @@ from api.models import Game, HighScore, Move, User, UserProfile
 from django.contrib.sessions.models import Session
 from django.utils import timezone
 from gettext import gettext as _
+import logging
+
+log = logging.getLogger("orders")
+
 
 class UserProfileSerializer(serializers.ModelSerializer):
     class Meta:
@@ -80,7 +84,9 @@ class GamePlaySerializer(serializers.ModelSerializer):
             raise ValidationError(_("Maximum count of players reached."))
         for player in players:
             if player not in login_players:
-                raise ValidationError(_("Player (id: {}) must be login.").format(player.id))
+                raise ValidationError(
+                    _("Player (id: {}) must be login.").format(player.id)
+                )
         return players
 
     def create(self, validated_data):
@@ -88,8 +94,8 @@ class GamePlaySerializer(serializers.ModelSerializer):
         game = super().create(validated_data)
         game.current_moves.set(all_possible_moves)
         game.winning_combinations = self._get_winning_combinations(all_possible_moves)
-        import pdb;pdb.set_trace()
         game.save()
+        log.info(_("Good luck to both of you. Let's the game begin!"))
         return game
 
     def _setup(self, validated_data):
@@ -117,9 +123,13 @@ class GamePlaySerializer(serializers.ModelSerializer):
         return User.objects.filter(id__in=uid_list)
 
     def _get_winning_combinations(self, all_possible_moves):
-        ids=[obj.id for obj in all_possible_moves]
+        ids = [obj.id for obj in all_possible_moves]
         rows = [
-            list(Move.objects.filter(row=move.row, id__in=ids).values_list("id", flat=True))
+            list(
+                Move.objects.filter(row=move.row, id__in=ids).values_list(
+                    "id", flat=True
+                )
+            )
             for move in all_possible_moves[: self.data["board_size"]]
         ]
         columns = [list(col) for col in zip(*rows)]
@@ -138,18 +148,19 @@ class MoveSerializer(serializers.ModelSerializer):
             "player",
         )
 
+    def to_representation(self, value):
+        return value.values_list("id", "row", "col", "player")
+
 
 class GamePlayPartialUpdateSerializer(serializers.ModelSerializer):
     current_moves = MoveSerializer()
 
     class Meta:
         model = Game
-        fields = (
-            "current_moves",
-        )
+        fields = ("current_moves",)
 
     def validate_current_moves(self, current_moves):
-        if current_moves['player'] == self.instance.current_player:
+        if current_moves["player"] == self.instance.current_player:
             return current_moves
         else:
             raise serializers.ValidationError(
@@ -161,6 +172,8 @@ class GamePlayPartialUpdateSerializer(serializers.ModelSerializer):
             self.process_move(validated_data["current_moves"])
             if self.is_tied():
                 instance.is_done = True
+                instance.save()
+                log.info(_("Game draw! Feel free to try again. Good luck!"))
                 return instance
             elif instance.has_winner == True:
                 time_stop = timezone.now()
@@ -171,42 +184,56 @@ class GamePlayPartialUpdateSerializer(serializers.ModelSerializer):
                     duration_time=duration,
                     moves_count=moves,
                 )
+                log.info(
+                    _(
+                        "Congrats for player {}! Good game! Feel free to try again."
+                    ).format(instance.current_player)
+                )
                 return instance
             else:
-                instance.current_player = instance.players.exclude(id=instance.current_player.id)[0]
+                instance.current_player = instance.players.exclude(
+                    id=instance.current_player.id
+                )[0]
                 instance.save()
+                log.info(_("Player's {} turn.").format(instance.current_player))
                 return instance
         else:
             raise serializers.ValidationError(
-                _("This move is invalid - check if it has been made or if the game has ended.")
+                _(
+                    "This move is invalid - check if it has been made or if the game has ended."
+                )
             )
 
     def _is_move_valid(self, move):
         """Return True if move is valid, and False otherwise."""
-        row, col, player = move['row'], move['col'], move['player']
+        row, col, player = move["row"], move["col"], move["player"]
         move_was_not_played = (
-            len(Move.objects.filter(row=row, col=col, player=player)) == 0
+            len(self.instance.current_moves.filter(row=row, col=col, player=player))
+            == 0
         )
-        move_is_in_current = Move.objects.filter(row=row, col=col)[0] in self.instance.current_moves.all()
+        move_is_in_current = (
+            self.instance.current_moves.filter(row=row, col=col)[0]
+            in self.instance.current_moves.all()
+        )
         no_winner = not self.instance.has_winner
-
         return no_winner and move_was_not_played and move_is_in_current
 
     def process_move(self, move):
         """Process the current move and check if it's a win."""
-        row, col = move['row'], move['col']
-        updated_move = Move.objects.get(row=row, col=col)
+        row, col = move["row"], move["col"]
+        updated_move = self.instance.current_moves.get(row=row, col=col)
         updated_move.player = self.instance.current_player
         updated_move.save()
-        current_move = self.instance.current_moves.get(row=row,col=col)
-        current_move.player=updated_move.player
+        current_move = self.instance.current_moves.get(row=row, col=col)
+        current_move.player = updated_move.player
         current_move.save()
         for combo in self.instance.winning_combinations:
             results = list(
-                Move.objects.filter(id=obj, player=updated_move.player) for obj in combo
+                self.instance.current_moves.filter(id=obj, player=updated_move.player)
+                for obj in combo
             )
             for result in results:
-                if len(result) == 0: 
+                if len(result) == 0:
                     results.remove(result)
             is_win = len(results) == self.instance.board_size
             if is_win:
@@ -220,5 +247,5 @@ class GamePlayPartialUpdateSerializer(serializers.ModelSerializer):
     def is_tied(self):
         """Return True if the game is tied, and False otherwise."""
         no_winner = not self.instance.has_winner
-        no_played_moves = (self.instance.current_moves.filter(player=None))
-        return no_winner and len(no_played_moves) == 0
+        no_played_moves = self.instance.current_moves.filter(player=None)
+        return no_winner and no_played_moves.count() == 0

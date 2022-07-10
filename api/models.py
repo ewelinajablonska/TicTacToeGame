@@ -50,13 +50,13 @@ class Move(models.Model):
     player = models.ForeignKey(
         UserProfile, on_delete=models.CASCADE, blank=True, null=True
     )
-    # time_stamp = models.DateTimeField(editable=False, blank=True)
+    time_stamp = models.DateTimeField(editable=False, blank=True)
 
-    # def save(self, *args, **kwargs):
-    #     """On save, update timestamps"""
-    #     self.date = timezone.now()
+    def save(self, *args, **kwargs):
+        """On save, update timestamps"""
+        self.date = timezone.now()
 
-    #     return super(Move, self).save(*args, **kwargs)
+        return super(Move, self).save(*args, **kwargs)
 
 class Game(models.Model):
     # setup informations
@@ -71,7 +71,7 @@ class Game(models.Model):
     is_done = models.BooleanField(default=False)
     has_winner = models.BooleanField(default=False)
     winner_combination = models.JSONField(null=True, blank=True, default=list)
-    # status = models.JSONField(null=True, blank=True, default=list)
+    status = models.JSONField(null=True, blank=True, default=list)
     # current informations
     current_player = models.ForeignKey(
         UserProfile,

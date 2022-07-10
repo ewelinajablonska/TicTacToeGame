@@ -1,11 +1,11 @@
-from datetime import timezone
+from datetime import datetime, timezone
 from django.forms import ValidationError
 from rest_framework import serializers
 from api.models import Game, HighScore, Move, User, UserProfile
 
 from django.contrib.sessions.models import Session
 from django.utils import timezone
-
+from gettext import gettext as _
 
 class UserProfileSerializer(serializers.ModelSerializer):
     class Meta:
@@ -68,6 +68,9 @@ class GamePlaySerializer(serializers.ModelSerializer):
             child=serializers.IntegerField(default=None, allow_null=True)
         )
     )
+    # status = serializers.ListField(
+    #     child=serializers.IntegerField(default=None, allow_null=True)
+    # )
 
     class Meta:
         model = Game
@@ -79,14 +82,13 @@ class GamePlaySerializer(serializers.ModelSerializer):
         for user in login_users:
             login_players.append(user.profile)
         if len(players) > self.initial_data["max_players_number"]:
-            raise ValidationError("Maximum count of players reached.")
+            raise ValidationError(_("Maximum count of players reached."))
         for player in players:
             if player not in login_players:
-                raise ValidationError("Player must be login.")
+                raise ValidationError(_("Player must be login."))
         return players
 
     def create(self, validated_data):
-        Move.objects.all().delete()
         self._setup(validated_data)
         game = super().create(validated_data)
         all_possible_moves = Move.objects.all()
@@ -134,75 +136,97 @@ class GamePlaySerializer(serializers.ModelSerializer):
 class MoveSerializer(serializers.ModelSerializer):
     class Meta:
         model = Move
-        fields = "__all__"
+        fields = (
+            "row",
+            "col",
+            "player",
+        )
 
 
 class GamePlayPartialUpdateSerializer(serializers.ModelSerializer):
-    current_moves = MoveSerializer(read_only=True)
+    current_moves = MoveSerializer()
 
     class Meta:
         model = Game
         fields = (
-            "current_player",
             "current_moves",
         )
 
-    def validate_current_player(self, current_player):
-        if current_player.id in self.players:
-            return current_player
+    def validate_current_moves(self, current_moves):
+        if current_moves['player'] == self.instance.current_player:
+            return current_moves
         else:
             raise serializers.ValidationError(
-                "This player isn't one of the current players of this game."
+                _("This player isn't the current player.")
             )
 
     def update(self, instance, validated_data):
-        if self._is_move_valid(validated_data["move"]):
-            self.process_move(validated_data["move"])
-            if self.is_tied() or self.has_winner:
-                self.is_done = True
-            elif self.has_winner == True:
-                time_stop = timezone.now()
-                duration = time_stop - self.created_date
+        if self._is_move_valid(validated_data["current_moves"]):
+            self.process_move(validated_data["current_moves"])
+            if self.is_tied():
+                instance.is_done = True
+                # instance.status = Move.objects.values_list('id','player')
+                instance.save()
+                return instance
+            elif instance.has_winner == True:
+                time_stop = datetime.now()
+                duration = time_stop - instance.created_date
                 moves = self.current_moves.objects.filter(
                     player=self.current_player
                 ).count()
+                import pdb;pdb.set_trace()
                 HighScore.objects.create(
                     player=self.current_player,
                     duration_time=duration,
                     moves_count=moves,
                 )
-                self.is_done = True
+                # instance.status = Move.objects.values_list('id','player')
+                instance.save()
+                Move.objects.all().delete()
+                return instance
             else:
-                # -- switch player --
-                pass
+                import pdb;pdb.set_trace()
+                instance.current_player = instance.players.exclude(id=instance.current_player.id)[0]
+                instance.save()
+                return instance
+        else:
+            raise serializers.ValidationError(
+                _("This move is invalid - check if it has been made or if the game has ended.")
+            )
 
     def _is_move_valid(self, move):
         """Return True if move is valid, and False otherwise."""
-        row, col = move.row, move.col
+        row, col, player = move['row'], move['col'], move['player']
         move_was_not_played = (
-            Move.objects.filter(row=row, col=col, player=move.player) == None
+            len(Move.objects.filter(row=row, col=col, player=player)) == 0
         )
-        no_winner = not self.has_winner
+        no_winner = not self.instance.has_winner
         return no_winner and move_was_not_played
 
     def process_move(self, move):
         """Process the current move and check if it's a win."""
-        row, col = move.row, move.col
-        self.current_moves.add(move)
-        self.current_moves.save()
-        for combo in self.winning_combinations:
+        row, col = move['row'], move['col']
+        updated_move = Move.objects.get(row=row, col=col)
+        updated_move.player = self.instance.current_player
+        updated_move.save()
+        for combo in self.instance.winning_combinations:
             results = list(
-                Move.objects.filter(row=n, col=m, plyer=move.player) for n, m in combo
+                Move.objects.filter(id=obj, player=updated_move.player) for obj in combo
             )
-            is_win = len(results) == self.board_size
+            for result in results:
+                if len(result) == 0: 
+                    results.remove(result)
+            is_win = len(results) == self.instance.board_size
             if is_win:
-                self.has_winner = True
-                self.winner_combination = combo
-                self.is_done = True
+                self.instance.has_winner = True
+                self.instance.winner_combination = combo
+                self.instance.is_done = True
+                self.instance.save()
                 break
+            continue
 
     def is_tied(self):
         """Return True if the game is tied, and False otherwise."""
-        no_winner = not self.has_winner
-        played_moves = (move.player for row in self.current_moves for move in row)
-        return no_winner and all(played_moves)
+        no_winner = not self.instance.has_winner
+        no_played_moves = (Move.objects.filter(player=None))
+        return no_winner and len(no_played_moves) == 0

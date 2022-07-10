@@ -47,11 +47,7 @@ class DashboardViewSet(viewsets.ReadOnlyModelViewSet):
 
 class GamePlayViewSet(
     SerializerActionClassMixin,
-    mixins.CreateModelMixin,
-    mixins.RetrieveModelMixin,
-    mixins.DestroyModelMixin,
-    mixins.ListModelMixin,
-    viewsets.GenericViewSet,
+    viewsets.ModelViewSet,
 ):
     """
     API endpoint that allows games to be created, read. TODO not updated
@@ -61,9 +57,6 @@ class GamePlayViewSet(
     queryset = Game.objects.all()
 
     serializer_action_classes = {"partial_update": GamePlayPartialUpdateSerializer}
-
-    def put(self, request, *args, **kwargs):
-        return self.update(request, *args, **kwargs)
 
     def partial_update(self, request, *args, **kwargs):
         kwargs["partial"] = True

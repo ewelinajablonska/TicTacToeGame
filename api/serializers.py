@@ -163,7 +163,6 @@ class GamePlayPartialUpdateSerializer(serializers.ModelSerializer):
                     "Congrats for player {}! Good game! Feel free to try again."
                 ).format(instance.current_player)
             )
-            import pdb; pdb.set_trace()
             return instance
         else:
             instance.current_player = instance.players.exclude(

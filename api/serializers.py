@@ -1,6 +1,6 @@
 from django.forms import ValidationError
 from rest_framework import serializers
-from api.models import Game, HighScore, Move, User, UserProfile
+from api.models import Game, HighScore, User, UserProfile
 
 from django.utils import timezone
 from gettext import gettext as _
@@ -15,7 +15,7 @@ class UserProfileSerializer(serializers.ModelSerializer):
         fields = ("title", "address", "country", "city")
 
 
-class UserSerializer(serializers.HyperlinkedModelSerializer):
+class UserSerializer(serializers.ModelSerializer):
     profile = UserProfileSerializer(required=True)
 
     class Meta:
@@ -87,7 +87,6 @@ class GamePlaySerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         all_possible_moves = self._setup(validated_data)
         game = super().create(validated_data)
-        game.current_moves.set(all_possible_moves)
         game.winning_combinations = self._get_winning_combinations(all_possible_moves)
         game.save()
         log.info(_("Good luck to both of you. Let's the game begin!"))
@@ -99,49 +98,28 @@ class GamePlaySerializer(serializers.ModelSerializer):
         # set created_date
         validated_data["created_date"] = timezone.now()
         # define how to store moves
-        all_possible_moves = [
-            Move.objects.create(row=row, col=col)
-            for col in range(validated_data["board_size"])
-            for row in range(validated_data["board_size"])
-        ]
+        all_possible_moves = [k for k in range(validated_data["board_size"]**2)]
+        # setup players status
+        players_id = [player.id for player in validated_data['players']]
+        validated_data['game_status']={value:[] for value in players_id}
         return all_possible_moves
 
     def _get_winning_combinations(self, all_possible_moves):
-        ids = [obj.id for obj in all_possible_moves]
-        rows = [
-            list(
-                Move.objects.filter(row=move.row, id__in=ids).values_list(
-                    "id", flat=True
-                )
-            )
-            for move in all_possible_moves[: self.data["board_size"]]
-        ]
-        columns = [list(col) for col in zip(*rows)]
+        length = len(all_possible_moves)
+        col_number = self.initial_data['board_size']
+        columns = [all_possible_moves[i*length//col_number:(i+1)*length//col_number] for i in range(col_number)]
+        rows = [list(col) for col in zip(*columns)]
         first_diagonal = [row[i] for i, row in enumerate(rows)]
         second_diagonal = [col[j] for j, col in enumerate(reversed(columns))]
         winning_combinations = rows + columns + [first_diagonal, second_diagonal]
         return winning_combinations
 
 
-class MoveSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Move
-        fields = (
-            "row",
-            "col",
-            "player",
-        )
-
-    def to_representation(self, value):
-        return value.values_list("id", "row", "col", "player")
-
-
 class GamePlayPartialUpdateSerializer(serializers.ModelSerializer):
-    current_moves = MoveSerializer()
 
     class Meta:
         model = Game
-        fields = ("current_moves",)
+        fields = ("game_status",)
 
     def validate_current_moves(self, current_moves):
         row, col, player = current_moves["row"], current_moves["col"], current_moves["player"]

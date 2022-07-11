@@ -10,7 +10,6 @@ from api.serializers import (
     DashboardSerializer,
     GamePlayPartialUpdateSerializer,
     GamePlaySerializer,
-    MoveSerializer,
     UserProfileSerializer,
     UserSerializer,
 )

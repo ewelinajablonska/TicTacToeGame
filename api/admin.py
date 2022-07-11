@@ -2,7 +2,7 @@ from django.contrib import admin
 from django.utils.translation import gettext as _
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 
-from .models import Game, HighScore, Move, User, UserProfile
+from .models import Game, HighScore, User, UserProfile
 
 
 class UserProfileInline(admin.StackedInline):
@@ -20,4 +20,3 @@ class UserAdmin(BaseUserAdmin):
 admin.site.register(UserProfile)
 admin.site.register(HighScore)
 admin.site.register(Game)
-admin.site.register(Move)

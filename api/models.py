@@ -44,14 +44,6 @@ class HighScore(models.Model):
         return super(HighScore, self).save(*args, **kwargs)
 
 
-class Move(models.Model):
-    row = models.IntegerField(blank=True, null=True)
-    col = models.IntegerField(blank=True, null=True)
-    player = models.ForeignKey(
-        UserProfile, on_delete=models.CASCADE, blank=True, null=True
-    )
-
-
 class Game(models.Model):
     # setup informations
     players = models.ManyToManyField(
@@ -73,6 +65,4 @@ class Game(models.Model):
         null=True,
         related_name="current_player",
     )
-    current_moves = models.ManyToManyField(
-        Move, blank=True, related_name="current_moves"
-    )
+    game_status = models.JSONField(null=True, blank=True, default=dict)

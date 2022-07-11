@@ -1,9 +1,7 @@
-from datetime import datetime
 from django.forms import ValidationError
 from rest_framework import serializers
 from api.models import Game, HighScore, Move, User, UserProfile
 
-from django.contrib.sessions.models import Session
 from django.utils import timezone
 from gettext import gettext as _
 import logging
@@ -76,16 +74,13 @@ class GamePlaySerializer(serializers.ModelSerializer):
         fields = "__all__"
 
     def validate_players(self, players):
-        login_users = self._get_all_logged_in_users()
-        login_players = list()
-        for user in login_users:
-            login_players.append(user.profile)
+        all_players = UserProfile.objects.all()
         if len(players) > self.initial_data["max_players_number"]:
             raise ValidationError(_("Maximum count of players reached."))
         for player in players:
-            if player not in login_players:
+            if player not in all_players:
                 raise ValidationError(
-                    _("Player (id: {}) must be login.").format(player.id)
+                    _("Player (id: {}) must be registered.").format(player.id)
                 )
         return players
 
@@ -110,17 +105,6 @@ class GamePlaySerializer(serializers.ModelSerializer):
             for row in range(validated_data["board_size"])
         ]
         return all_possible_moves
-
-    def _get_all_logged_in_users(self):
-        # Query all non-expired sessions
-        sessions = Session.objects.filter(expire_date__gte=timezone.now())
-        uid_list = []
-        # Build a list of user ids from that query
-        for session in sessions:
-            data = session.get_decoded()
-            uid_list.append(data.get("_auth_user_id", None))
-        # Query all logged in users based on id list
-        return User.objects.filter(id__in=uid_list)
 
     def _get_winning_combinations(self, all_possible_moves):
         ids = [obj.id for obj in all_possible_moves]
@@ -160,53 +144,7 @@ class GamePlayPartialUpdateSerializer(serializers.ModelSerializer):
         fields = ("current_moves",)
 
     def validate_current_moves(self, current_moves):
-        if current_moves["player"] == self.instance.current_player:
-            return current_moves
-        else:
-            raise serializers.ValidationError(
-                _("This player isn't the current player.")
-            )
-
-    def update(self, instance, validated_data):
-        if self._is_move_valid(validated_data["current_moves"]):
-            self.process_move(validated_data["current_moves"])
-            if self.is_tied():
-                instance.is_done = True
-                instance.save()
-                log.info(_("Game draw! Feel free to try again. Good luck!"))
-                return instance
-            elif instance.has_winner == True:
-                time_stop = timezone.now()
-                duration = time_stop - instance.created_date
-                moves = Move.objects.filter(player=instance.current_player).count()
-                HighScore.objects.create(
-                    player=instance.current_player,
-                    duration_time=duration,
-                    moves_count=moves,
-                )
-                log.info(
-                    _(
-                        "Congrats for player {}! Good game! Feel free to try again."
-                    ).format(instance.current_player)
-                )
-                return instance
-            else:
-                instance.current_player = instance.players.exclude(
-                    id=instance.current_player.id
-                )[0]
-                instance.save()
-                log.info(_("Player's {} turn.").format(instance.current_player))
-                return instance
-        else:
-            raise serializers.ValidationError(
-                _(
-                    "This move is invalid - check if it has been made or if the game has ended."
-                )
-            )
-
-    def _is_move_valid(self, move):
-        """Return True if move is valid, and False otherwise."""
-        row, col, player = move["row"], move["col"], move["player"]
+        row, col, player = current_moves["row"], current_moves["col"], current_moves["player"]
         move_was_not_played = (
             len(self.instance.current_moves.filter(row=row, col=col, player=player))
             == 0
@@ -215,8 +153,52 @@ class GamePlayPartialUpdateSerializer(serializers.ModelSerializer):
             self.instance.current_moves.filter(row=row, col=col)[0]
             in self.instance.current_moves.all()
         )
-        no_winner = not self.instance.has_winner
-        return no_winner and move_was_not_played and move_is_in_current
+        no_winner = not self.instance.has_winner        
+        
+        if player == self.instance.current_player and no_winner and move_was_not_played and move_is_in_current:
+            return current_moves
+        elif player != self.instance.current_player:
+            raise serializers.ValidationError(
+                _("This player isn't the current player.")
+            )
+        elif not no_winner:
+            raise serializers.ValidationError(
+                _("This game is over.")
+            )
+        else:
+            raise serializers.ValidationError(
+                _("Move is not valid.")
+            )            
+
+    def update(self, instance, validated_data):
+        self.process_move(validated_data["current_moves"])
+        if self.is_tied():
+            instance.is_done = True
+            instance.save()
+            log.info(_("Game draw! Feel free to try again. Good luck!"))
+            return instance
+        elif instance.has_winner == True:
+            time_stop = timezone.now()
+            duration = time_stop - instance.created_date
+            moves = Move.objects.filter(player=instance.current_player).count()
+            HighScore.objects.create(
+                player=instance.current_player,
+                duration_time=duration,
+                moves_count=moves,
+            )
+            log.info(
+                _(
+                    "Congrats for player {}! Good game! Feel free to try again."
+                ).format(instance.current_player)
+            )
+            return instance
+        else:
+            instance.current_player = instance.players.exclude(
+                id=instance.current_player.id
+            )[0]
+            instance.save()
+            log.info(_("Player's {} turn.").format(instance.current_player))
+            return instance
 
     def process_move(self, move):
         """Process the current move and check if it's a win."""

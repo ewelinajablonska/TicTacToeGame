@@ -11,6 +11,7 @@ router.register(r"play", GamePlayViewSet, basename="gameplay")
 urlpatterns = [
     re_path(r"^", include(router.urls)),
     re_path(r"^dj-rest-auth/", include("dj_rest_auth.urls")),
+    re_path(r'^dj-rest-auth/registration/', include('dj_rest_auth.registration.urls')),
     re_path(
         r"^dashboard", views.DashboardViewSet.as_view({"get": "list"}), name="dashboard"
     ),

@@ -50,7 +50,7 @@ class Game(models.Model):
         UserProfile, blank=True, related_name="game_players"
     )
     max_players_number = models.IntegerField(default=2)
-    created_date = models.DateTimeField(blank=True)
+    created_date = models.DateTimeField(auto_now=True, blank=True)
     board_size = models.IntegerField(default=3)
     winning_combinations = models.JSONField(null=True, blank=True, default=list)
     # finish informations

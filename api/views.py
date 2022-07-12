@@ -1,7 +1,7 @@
 from django.shortcuts import render
 
 from rest_framework import viewsets
-from rest_framework.permissions import AllowAny
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework import mixins
 from rest_framework.status import (
     HTTP_200_OK,
@@ -55,11 +55,12 @@ class GamePlayViewSet(
     viewsets.ModelViewSet,
 ):
     """
-    API endpoint that allows games to be created, read. TODO not updated
+    API endpoint that allows games to be created, read, updated and deleted.
     """
 
     serializer_class = GamePlaySerializer
     queryset = Game.objects.all()
+    permission_classes = [IsAuthenticated]
 
     serializer_action_classes = {"partial_update": GamePlayPartialUpdateSerializer}
 

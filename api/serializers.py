@@ -14,6 +14,7 @@ class UserProfileSerializer(serializers.ModelSerializer):
         model = UserProfile
         fields = ("title", "address", "country", "city")
 
+# ewelina@ewelinaj:~$ curl -X GET "http://127.0.0.1:8000/api/dj-rest-auth/user/" -H  "accept: application/json" -H  "X-CSRFToken: i2MyJrRI8h8KmyvGSDFPzqFKFrbqSnQ2KCN91aa2FNRuP7uD1jyhSn0gdwb6NBgL" -H "Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNjU3NjE0NDQ2LCJpYXQiOjE2NTc2MTQxNDYsImp0aSI6IjQxMzU5MDIzN2M0NzQzOGNhYjJkYjBjMWU2OGRlOTQ1IiwidXNlcl9pZCI6MX0.mOZrNGTGPBLKo86cAP1IjPXyPr12Rr1Ni5gQy6Jh_-s"
 
 class UserSerializer(serializers.ModelSerializer):
     profile = UserProfileSerializer(required=True)

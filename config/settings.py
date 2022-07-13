@@ -41,11 +41,11 @@ INSTALLED_APPS = [
     "rest_framework",
     "rest_framework.authtoken",
     "dj_rest_auth",
-    'django.contrib.sites',
-    'allauth',
-    'allauth.account',
-    'allauth.socialaccount',
-    'dj_rest_auth.registration',
+    "django.contrib.sites",
+    "allauth",
+    "allauth.account",
+    "allauth.socialaccount",
+    "dj_rest_auth.registration",
     "drf_yasg",
     "pytest",
     # my apps
@@ -153,12 +153,8 @@ JWT_AUTH_COOKIE = "my-app-auth"
 JWT_AUTH_REFRESH_COOKIE = "my-refresh-token"
 
 SWAGGER_SETTINGS = {
-    'SECURITY_DEFINITIONS': {
-        'token': {
-            'type': 'apiKey',
-            'in': 'header',
-            'name': 'Authorization'
-        }
+    "SECURITY_DEFINITIONS": {
+        "token": {"type": "apiKey", "in": "header", "name": "Authorization"}
     },
 }
 

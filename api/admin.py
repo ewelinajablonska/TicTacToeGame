@@ -9,6 +9,7 @@ class UserProfileInline(admin.StackedInline):
     model = UserProfile
     can_delete = False
 
+
 @admin.register(User)
 class UserAdmin(BaseUserAdmin):
     list_display = ("email", "first_name", "last_name", "is_staff")
@@ -41,6 +42,7 @@ class UserAdmin(BaseUserAdmin):
         ),
     )
     inlines = (UserProfileInline,)
+
 
 admin.site.register(UserProfile)
 admin.site.register(HighScore)

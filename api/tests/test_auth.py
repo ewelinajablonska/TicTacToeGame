@@ -154,7 +154,7 @@ def test_view_detail_success_with_authentication(client):
 
 
 @pytest.mark.django_db
-def test_view_update_failure_without_authentication(client):
+def test_update_failure_without_authentication(client):
     """register user"""
     response = client.post(
         reverse("rest_register"),

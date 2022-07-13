@@ -9,7 +9,7 @@ from model_bakery import baker
 
 from api.models import Game, User, UserProfile
 
-    """
+"""
     TODO: tests failed:
      - GET with incorrect 'pk'
      - POST with incorrect 'pk' or incorrect data values:
@@ -20,7 +20,8 @@ from api.models import Game, User, UserProfile
         * out of range
         * already played
         * when game is finished
-    """
+"""
+
 
 @pytest.mark.django_db
 def test_view_play_success(client):

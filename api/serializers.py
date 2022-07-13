@@ -14,7 +14,9 @@ class UserProfileSerializer(serializers.ModelSerializer):
         model = UserProfile
         fields = ("title", "address", "country", "city")
 
+
 # ewelina@ewelinaj:~$ curl -X GET "http://127.0.0.1:8000/api/dj-rest-auth/user/" -H  "accept: application/json" -H  "X-CSRFToken: i2MyJrRI8h8KmyvGSDFPzqFKFrbqSnQ2KCN91aa2FNRuP7uD1jyhSn0gdwb6NBgL" -H "Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNjU3NjE0NDQ2LCJpYXQiOjE2NTc2MTQxNDYsImp0aSI6IjQxMzU5MDIzN2M0NzQzOGNhYjJkYjBjMWU2OGRlOTQ1IiwidXNlcl9pZCI6MX0.mOZrNGTGPBLKo86cAP1IjPXyPr12Rr1Ni5gQy6Jh_-s"
+
 
 class UserSerializer(serializers.ModelSerializer):
     profile = UserProfileSerializer(required=True)
@@ -65,15 +67,13 @@ class GamePlaySerializer(serializers.ModelSerializer):
         many=True, queryset=UserProfile.objects.all()
     )
     winning_combinations = serializers.ListField(
-        child=serializers.ListField(
-            child=serializers.IntegerField(required=False)
-        ), required=False
+        child=serializers.ListField(child=serializers.IntegerField(required=False)),
+        required=False,
     )
     winner_combination = serializers.ListField(
         child=serializers.IntegerField(required=False), required=False
     )
 
-    
     class Meta:
         model = Game
         fields = "__all__"
@@ -93,13 +93,13 @@ class GamePlaySerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         all_possible_moves, validated_data = self._setup(validated_data)
-        players = validated_data.pop('players')
+        players = validated_data.pop("players")
         game = super().create(validated_data)
         game.players.set(players)
         game.current_player = players[0]
         game.created_date = timezone.now()
         players_id = [player.id for player in players]
-        game.game_status = {value:[] for value in players_id}
+        game.game_status = {value: [] for value in players_id}
         game.winning_combinations = self._get_winning_combinations(all_possible_moves)
         game.save()
         log.info(_("Good luck to both of you. Let's the game begin!"))
@@ -111,16 +111,21 @@ class GamePlaySerializer(serializers.ModelSerializer):
         # set created_date
         validated_data["created_date"] = timezone.now()
         # define how to store moves
-        all_possible_moves = [k for k in range(validated_data["board_size"]**2)]
+        all_possible_moves = [k for k in range(validated_data["board_size"] ** 2)]
         # setup players status
-        players_id = [player.id for player in validated_data['players']]
-        validated_data['game_status']={value:[] for value in players_id}
+        players_id = [player.id for player in validated_data["players"]]
+        validated_data["game_status"] = {value: [] for value in players_id}
         return all_possible_moves, validated_data
 
     def _get_winning_combinations(self, all_possible_moves):
         length = len(all_possible_moves)
-        col_number = int(self.initial_data['board_size'])
-        columns = [all_possible_moves[i*length//col_number:(i+1)*length//col_number] for i in range(col_number)]
+        col_number = int(self.initial_data["board_size"])
+        columns = [
+            all_possible_moves[
+                i * length // col_number : (i + 1) * length // col_number
+            ]
+            for i in range(col_number)
+        ]
         rows = [list(col) for col in zip(*columns)]
         first_diagonal = [row[i] for i, row in enumerate(rows)]
         second_diagonal = [col[j] for j, col in enumerate(reversed(columns))]
@@ -139,18 +144,14 @@ class GamePlayPartialUpdateSerializer(serializers.ModelSerializer):
         moves_list = list(self.instance.game_status.values())
         move_was_not_played = move not in [obj for list in moves_list for obj in list]
         move_is_in_current = move in [k for k in range(self.instance.board_size**2)]
-        no_winner = not self.instance.has_winner        
-        
+        no_winner = not self.instance.has_winner
+
         if no_winner and move_was_not_played and move_is_in_current:
             return move
         elif not no_winner:
-            raise serializers.ValidationError(
-                _("This game is over.")
-            )
+            raise serializers.ValidationError(_("This game is over."))
         else:
-            raise serializers.ValidationError(
-                _("Move is not valid.")
-            )            
+            raise serializers.ValidationError(_("Move is not valid."))
 
     def to_representation(self, value):
         return value.game_status
@@ -172,9 +173,9 @@ class GamePlayPartialUpdateSerializer(serializers.ModelSerializer):
                 moves_count=moves,
             )
             log.info(
-                _(
-                    "Congrats for player {}! Good game! Feel free to try again."
-                ).format(instance.current_player)
+                _("Congrats for player {}! Good game! Feel free to try again.").format(
+                    instance.current_player
+                )
             )
             return instance
         else:
@@ -209,5 +210,5 @@ class GamePlayPartialUpdateSerializer(serializers.ModelSerializer):
         played_moves = [obj for list in moves_list for obj in list]
         all_moves = [k for k in range(self.instance.board_size**2)]
         no_played_moves = all(item in played_moves for item in all_moves)
-        
+
         return no_winner and no_played_moves

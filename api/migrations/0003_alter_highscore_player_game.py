@@ -7,29 +7,53 @@ import django.db.models.deletion
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('api', '0002_highscore'),
+        ("api", "0002_highscore"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='highscore',
-            name='player',
-            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='api.userprofile'),
+            model_name="highscore",
+            name="player",
+            field=models.ForeignKey(
+                on_delete=django.db.models.deletion.CASCADE, to="api.userprofile"
+            ),
         ),
         migrations.CreateModel(
-            name='Game',
+            name="Game",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('max_players_number', models.IntegerField(default=2)),
-                ('created_date', models.DateTimeField(auto_now=True)),
-                ('board_size', models.IntegerField(default=3)),
-                ('winning_combinations', models.JSONField(default=list, null=True)),
-                ('is_done', models.BooleanField(default=False)),
-                ('has_winner', models.BooleanField(default=False)),
-                ('winner_combination', models.JSONField(default=list, null=True)),
-                ('game_status', models.JSONField(blank=True, default=dict, null=True)),
-                ('current_player', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.CASCADE, related_name='current_player', to='api.userprofile')),
-                ('players', models.ManyToManyField(blank=True, related_name='game_players', to='api.userprofile')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("max_players_number", models.IntegerField(default=2)),
+                ("created_date", models.DateTimeField(auto_now=True)),
+                ("board_size", models.IntegerField(default=3)),
+                ("winning_combinations", models.JSONField(default=list, null=True)),
+                ("is_done", models.BooleanField(default=False)),
+                ("has_winner", models.BooleanField(default=False)),
+                ("winner_combination", models.JSONField(default=list, null=True)),
+                ("game_status", models.JSONField(blank=True, default=dict, null=True)),
+                (
+                    "current_player",
+                    models.ForeignKey(
+                        blank=True,
+                        null=True,
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="current_player",
+                        to="api.userprofile",
+                    ),
+                ),
+                (
+                    "players",
+                    models.ManyToManyField(
+                        blank=True, related_name="game_players", to="api.userprofile"
+                    ),
+                ),
             ],
         ),
     ]

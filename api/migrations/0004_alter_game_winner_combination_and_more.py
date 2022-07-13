@@ -6,18 +6,18 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('api', '0003_alter_highscore_player_game'),
+        ("api", "0003_alter_highscore_player_game"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='game',
-            name='winner_combination',
+            model_name="game",
+            name="winner_combination",
             field=models.JSONField(null=True),
         ),
         migrations.AlterField(
-            model_name='game',
-            name='winning_combinations',
+            model_name="game",
+            name="winning_combinations",
             field=models.JSONField(null=True),
         ),
     ]

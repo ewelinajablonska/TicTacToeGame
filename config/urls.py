@@ -21,6 +21,6 @@ from django.contrib import admin
 
 urlpatterns = [
     re_path(r"^admin/", admin.site.urls),
-    re_path(r"^api/", include("api.urls")),
+    re_path(r"^api/", include("api.urls"), name="api"),
     re_path("", include("api.api_doc_url"), name="api-doc"),
 ]

@@ -1,54 +1,12 @@
 from django.forms import ValidationError
 from rest_framework import serializers
-from api.models import Game, HighScore, User, UserProfile
+from api.models import Game, HighScore, UserProfile
 
 from django.utils import timezone
 from gettext import gettext as _
 import logging
 
 log = logging.getLogger("orders")
-
-
-class UserProfileSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = UserProfile
-        fields = ("title", "address", "country", "city")
-
-
-# ewelina@ewelinaj:~$ curl -X GET "http://127.0.0.1:8000/api/dj-rest-auth/user/" -H  "accept: application/json" -H  "X-CSRFToken: i2MyJrRI8h8KmyvGSDFPzqFKFrbqSnQ2KCN91aa2FNRuP7uD1jyhSn0gdwb6NBgL" -H "Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNjU3NjE0NDQ2LCJpYXQiOjE2NTc2MTQxNDYsImp0aSI6IjQxMzU5MDIzN2M0NzQzOGNhYjJkYjBjMWU2OGRlOTQ1IiwidXNlcl9pZCI6MX0.mOZrNGTGPBLKo86cAP1IjPXyPr12Rr1Ni5gQy6Jh_-s"
-
-
-class UserSerializer(serializers.ModelSerializer):
-    profile = UserProfileSerializer(required=True)
-
-    class Meta:
-        model = User
-        fields = ("url", "email", "first_name", "last_name", "password", "profile")
-        extra_kwargs = {"password": {"write_only": True}}
-
-    def create(self, validated_data):
-        profile_data = validated_data.pop("profile")
-        password = validated_data.pop("password")
-        user = User(**validated_data)
-        user.set_password(password)
-        user.save()
-        UserProfile.objects.create(user=user, **profile_data)
-        return user
-
-    def update(self, instance, validated_data):
-        profile_data = validated_data.pop("profile")
-        profile = instance.profile
-
-        instance.email = validated_data.get("email", instance.email)
-        instance.save()
-        # assign nested fields
-        profile.title = profile_data.get("title", profile.title)
-        profile.address = profile_data.get("address", profile.address)
-        profile.country = profile_data.get("country", profile.country)
-        profile.city = profile_data.get("city", profile.city)
-        profile.save()
-
-        return instance
 
 
 class DashboardSerializer(serializers.ModelSerializer):

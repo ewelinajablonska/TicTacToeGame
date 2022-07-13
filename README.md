@@ -45,18 +45,21 @@ pip install -r requirements.txt
 python manage.py migrate
 python manage.py createsuperuser
 ```
+```
 set all login data:
 Username: admin
 Email address: admin@example.com
 Password: **********
 Password (again): *********
 Superuser created successfully.
+```
 
 ## Running
 ```
 python manage.py runserver
 ```
 Login  as superuser at http://127.0.0.1:8000/api/dj-rest-auth/login/
+
 Now you can access http://127.0.0.1:8000/api/
 
 ## API Swagger

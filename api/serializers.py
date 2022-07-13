@@ -61,23 +61,29 @@ class DashboardSerializer(serializers.ModelSerializer):
 
 
 class GamePlaySerializer(serializers.ModelSerializer):
+    players = serializers.PrimaryKeyRelatedField(
+        many=True, queryset=UserProfile.objects.all()
+    )
     winning_combinations = serializers.ListField(
         child=serializers.ListField(
-            child=serializers.IntegerField(default=None, allow_null=True)
-        )
+            child=serializers.IntegerField(required=False)
+        ), required=False
     )
     winner_combination = serializers.ListField(
-        child=serializers.IntegerField(default=None, allow_null=True)
+        child=serializers.IntegerField(required=False), required=False
     )
 
+    
     class Meta:
         model = Game
         fields = "__all__"
 
     def validate_players(self, players):
         all_players = UserProfile.objects.all()
-        if len(players) > self.initial_data["max_players_number"]:
+        if len(players) > int(self.initial_data["max_players_number"]):
             raise ValidationError(_("Maximum count of players reached."))
+        elif len(players) < 2:
+            raise ValidationError(_("Minimum count of players reached."))
         for player in players:
             if player not in all_players:
                 raise ValidationError(
@@ -86,8 +92,14 @@ class GamePlaySerializer(serializers.ModelSerializer):
         return players
 
     def create(self, validated_data):
-        all_possible_moves = self._setup(validated_data)
+        all_possible_moves, validated_data = self._setup(validated_data)
+        players = validated_data.pop('players')
         game = super().create(validated_data)
+        game.players.set(players)
+        game.current_player = players[0]
+        game.created_date = timezone.now()
+        players_id = [player.id for player in players]
+        game.game_status = {value:[] for value in players_id}
         game.winning_combinations = self._get_winning_combinations(all_possible_moves)
         game.save()
         log.info(_("Good luck to both of you. Let's the game begin!"))
@@ -103,11 +115,11 @@ class GamePlaySerializer(serializers.ModelSerializer):
         # setup players status
         players_id = [player.id for player in validated_data['players']]
         validated_data['game_status']={value:[] for value in players_id}
-        return all_possible_moves
+        return all_possible_moves, validated_data
 
     def _get_winning_combinations(self, all_possible_moves):
         length = len(all_possible_moves)
-        col_number = self.initial_data['board_size']
+        col_number = int(self.initial_data['board_size'])
         columns = [all_possible_moves[i*length//col_number:(i+1)*length//col_number] for i in range(col_number)]
         rows = [list(col) for col in zip(*columns)]
         first_diagonal = [row[i] for i, row in enumerate(rows)]

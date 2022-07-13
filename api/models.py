@@ -3,6 +3,7 @@ from django.db import models
 from django.contrib.auth.models import AbstractUser
 from django.utils.translation import gettext as _
 from django.conf import settings
+from pkg_resources import require
 
 
 class User(AbstractUser):
@@ -52,11 +53,11 @@ class Game(models.Model):
     max_players_number = models.IntegerField(default=2)
     created_date = models.DateTimeField(auto_now=True, blank=True)
     board_size = models.IntegerField(default=3)
-    winning_combinations = models.JSONField(null=True, blank=True, default=list)
+    winning_combinations = models.JSONField(null=True, default=list)
     # finish informations
     is_done = models.BooleanField(default=False)
     has_winner = models.BooleanField(default=False)
-    winner_combination = models.JSONField(null=True, blank=True, default=list)
+    winner_combination = models.JSONField(null=True, default=list)
     # current informations
     current_player = models.ForeignKey(
         UserProfile,

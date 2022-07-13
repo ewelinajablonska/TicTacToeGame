@@ -1,3 +1,4 @@
+from typing import List
 from django.forms import ValidationError
 from rest_framework import serializers
 from api.models import Game, HighScore, UserProfile
@@ -63,7 +64,7 @@ class GamePlaySerializer(serializers.ModelSerializer):
         log.info(_("Good luck to both of you. Let's the game begin!"))
         return game
 
-    def _setup(self, validated_data):
+    def _setup(self, validated_data: dict):
         # set players
         validated_data["current_player"] = validated_data["players"][0]
         # set created_date
@@ -75,7 +76,7 @@ class GamePlaySerializer(serializers.ModelSerializer):
         validated_data["game_status"] = {value: [] for value in players_id}
         return all_possible_moves, validated_data
 
-    def _get_winning_combinations(self, all_possible_moves):
+    def _get_winning_combinations(self, all_possible_moves: List[int]) -> List[List[int]]:
         length = len(all_possible_moves)
         col_number = int(self.initial_data["board_size"])
         columns = [
@@ -98,7 +99,7 @@ class GamePlayPartialUpdateSerializer(serializers.ModelSerializer):
         model = Game
         fields = ("move",)
 
-    def validate_move(self, move):
+    def validate_move(self, move: int) -> int:
         moves_list = list(self.instance.game_status.values())
         move_was_not_played = move not in [obj for list in moves_list for obj in list]
         move_is_in_current = move in [k for k in range(self.instance.board_size**2)]
@@ -144,7 +145,7 @@ class GamePlayPartialUpdateSerializer(serializers.ModelSerializer):
             log.info(_("Player's {} turn.").format(instance.current_player))
             return instance
 
-    def process_move(self, move):
+    def process_move(self, move: int) -> None:
         """Process the current move and check if it's a win."""
         player_id = self.instance.current_player.id
         self.instance.game_status[str(player_id)].append(move)
@@ -160,7 +161,7 @@ class GamePlayPartialUpdateSerializer(serializers.ModelSerializer):
                 break
             continue
 
-    def is_tied(self):
+    def is_tied(self) -> bool:
         """Return True if the game is tied, and False otherwise."""
         no_winner = not self.instance.has_winner
 

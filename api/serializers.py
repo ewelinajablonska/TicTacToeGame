@@ -7,7 +7,7 @@ from django.utils import timezone
 from gettext import gettext as _
 import logging
 
-log = logging.getLogger("orders")
+log = logging.getLogger()
 
 
 class DashboardSerializer(serializers.ModelSerializer):
@@ -42,7 +42,9 @@ class GamePlaySerializer(serializers.ModelSerializer):
         if len(players) > int(self.initial_data["max_players_number"]):
             raise ValidationError(_("Maximum count of players reached."))
         elif len(players) < 2:
-            raise ValidationError(_("Minimum count of players reached."))
+            raise ValidationError(_("Not enough players."))
+        elif len(players) > 2:
+            raise ValidationError(_("For now, this game is ready for two players only."))
         for player in players:
             if player not in all_players:
                 raise ValidationError(
@@ -93,6 +95,16 @@ class GamePlaySerializer(serializers.ModelSerializer):
 
 
 class GamePlayPartialUpdateSerializer(serializers.ModelSerializer):
+    """
+        Serializer resposible for player move. To play update 'game_status' field
+        by sending number of cell in created matrix.
+        Celss are numbered vertically from the top left corner to the bottom.
+        e.g.:
+        0 | 3 | 6
+        1 | 4 | 7
+        2 | 5 | 8
+
+    """
     move = serializers.IntegerField(allow_null=True)
 
     class Meta:

@@ -32,7 +32,7 @@ class UserProfile(models.Model):
 
 
 class HighScore(models.Model):
-    player = models.ForeignKey(UserProfile, on_delete=models.CASCADE)
+    player = models.ForeignKey(UserProfile, on_delete=models.CASCADE, related_name="highscores")
     date = models.DateTimeField(editable=False, blank=True)
     duration_time = models.DurationField(blank=True)
     moves_count = models.IntegerField(default=1)
